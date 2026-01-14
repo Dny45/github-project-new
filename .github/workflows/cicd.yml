@@ -119,29 +119,35 @@ jobs:
         context: .
         push: true
         tags: dny45/bankapp:latest
-        file: ./Dockerfile 
-        
+        file: ./Dockerfile      
   deploy_to_kubernetes:
-    runs-on: self-hosted
-    needs: buils_docker_image_and_push
+     runs-on: self-hosted
+     needs: buils_docker_image_and_push
+ 
+     steps:
+     - uses: actions/checkout@v4
 
-    steps:
-    - uses: actions/checkout@v4
+     - name: Configure AWS credentials
+       uses: aws-actions/configure-aws-credentials@v2
+       with:
+         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+         aws-region: ap-southeast-2
 
-    - name: Install kubectl
-      uses: azure/setup-kubectl@v3
-      with:
-       version: latest
+     - name: Install kubectl
+       uses: azure/setup-kubectl@v3
+       with:
+         version: latest
 
-    - name: Configure kubeconfig
-      run: |
-       mkdir -p ~/.kube
-       printf "%s" "${{ secrets.EKS_KUBECONFIG }}" > ~/.kube/config
+     - name: Configure kubeconfig
+       run: |
+        mkdir -p ~/.kube
+        printf "%s" "${{ secrets.EKS_KUBECONFIG }}" > ~/.kube/config
 
-    - name: Verify cluster access
-      run: |
-       kubectl get nodes
+     - name: Verify cluster access
+       run: |
+        kubectl get nodes
 
-    - name: Deploy to Kubernetes
-      run: |
-       kubectl apply -f ds.yml
+     - name: Deploy to Kubernetes
+       run: |
+        kubectl apply -f ds.yml
